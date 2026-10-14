@@ -67,8 +67,10 @@ regularization. Defaults: timing weight 0.5, KL weight 0.02, AdamW learning rate
 results. CUDA uses mixed precision; CPU tests use float32.
 
 The dataset filters to the run's single target player before sampling; positions
-from the other player do not train or validate that checkpoint. Sampling remains
-with replacement. A global chronological split keeps both sides of the same game
+from the other player do not train or validate that checkpoint. Training shuffles
+without replacement using its own seeded random generator. All training positions
+are used by default; optional caps use reservoir sampling across the source file.
+Validation is never capped. A global chronological split keeps both sides of the same game
 together, including games between the target players. Equal timestamps stay in
 the same split. Validation
 selects each model's best checkpoint using its player's move NLL plus weighted
@@ -82,6 +84,21 @@ backbone. Timing metrics include conditional NLL (knowing the actual move),
 pre-move marginal NLL, approximate mean absolute error in seconds and coverage of
 a nominal 80% interval expanded to bin boundaries. The latter can overcover due
 to coarse bins. Results are grouped by player and time class.
+
+Update-budget runs validate every `eval_every` successful optimizer updates and
+at the final update, overriding epoch count. Separate move CE, conditional timing
+CE, and KL training components are logged. A fixed seeded training subset uses
+the same evaluator as validation; the raw training objective and marginal
+validation score are not the same objective. The combined score still selects
+`best.pt`; move NLL selects an additional `best-move.pt`.
+
+Evaluation also groups by exact base+increment and remaining-clock band. It saves
+game-identifiable validation records, approximate binned-median MAE, and interval
+width alongside coverage. Empirical timing histograms and seconds medians are fit
+only on selected training positions, with a player fallback for sparse or unseen
+control/clock groups. Histogram smoothing gives nonzero probability to unseen
+bins. The median-seconds baseline is bounded by the observed remaining clock.
+Source hashes, selected offsets, batch-order hash and coverage are recorded.
 
 ## Important limits
 

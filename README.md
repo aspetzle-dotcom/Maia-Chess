@@ -59,10 +59,35 @@ The first Maia training run downloads upstream model weights from Hugging Face.
 Use `--checkpoint /path/to/maia3-5m.pt` for an existing checkpoint. A saved persona
 checkpoint embeds the backbone weights, so inference does not download them again.
 
-Training defaults to at most 10,000 positions **per player in each split** for an
-initial experiment. Set `--max-per-player 0` to use all positions. Missing training
+Training defaults to all positions, shuffled without replacement. An explicit
+`--max-per-player N` uses a seeded reservoir sample across the training file;
+validation is always uncapped. Missing training
 or validation coverage for a configured player is an error rather than silently
 training an empty persona. If GPU memory is tight, reduce `--batch-size` to 8.
+
+## Corrected Hikaru baseline
+
+Use the existing chronological splits and a new output directory:
+
+```bash
+chess-personas train --player hikaru --output runs/hikaru-corrected-3130 --max-per-player 0 --max-updates 3130 --eval-every 250 --batch-size 32 --learning-rate 0.0003 --seed 42
+```
+
+`--max-updates` overrides epochs and counts successful optimizer steps, including
+the final partial interval. The run evaluates at updates 250, 500, ..., 3000,
+and 3130. It fits empirical timing baselines only on training data and evaluates
+a fixed 1,024-position training subset with the same metrics as validation.
+No early stopping shortens an explicitly requested update budget.
+
+Outputs include separate training loss components, per-control metrics, timing
+median error and interval width, per-position validation records with game IDs,
+data hashes and coverage, and `timing-baseline.json`. `best.pt` preserves the
+original combined move/timing selection rule; `best-move.pt` uses move NLL;
+`last.pt` records the completed budget. These are fresh runs, not resumable jobs.
+The companion notebook is `notebooks/corrected_hikaru_baseline.ipynb`.
+
+Use validation for experiment decisions. Previously inspected test results are
+historical comparisons; reserve new chronological games for final confirmation.
 
 ### Colab
 
