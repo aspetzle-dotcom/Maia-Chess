@@ -48,6 +48,28 @@ def test_all_missing_times_keep_policy_training(synthetic_pgn):
     assert model.policy.weight.grad.abs().sum() > 0
 
 
+@pytest.mark.parametrize("dtype", [torch.float16, torch.bfloat16])
+def test_low_precision_backbone_keeps_policy_mask_finite(synthetic_pgn, dtype):
+    class LowPrecisionBackbone(SmokeBackbone):
+        def forward(self, batch):
+            squares, logits = super().forward(batch)
+            return squares.to(dtype), logits.to(dtype)
+
+    rows = game_rows(synthetic_pgn, {"hikaru", "fabianocaruana"})
+    batch = collate_rows(rows, ["hikaru", "fabianocaruana"])
+    assert (~batch["legal_mask"]).any()
+    model = PersonaModel(LowPrecisionBackbone(), ["hikaru", "fabianocaruana"])
+    output = model(batch)
+    assert output["move_logits"].dtype == torch.float32
+    assert torch.isfinite(output["move_logits"]).all()
+    assert (output["move_logits"].softmax(-1)[~batch["legal_mask"]] == 0).all()
+    objective = losses(output, batch)
+    assert torch.isfinite(objective["loss"])
+    objective["loss"].backward()
+    assert torch.isfinite(model.policy.weight.grad).all()
+    assert model.policy.weight.grad.abs().sum() > 0
+
+
 def test_training_checkpoint_evaluation_and_label_free_prediction(synthetic_dataset, tmp_path):
     torch.set_num_threads(1)
     directory, _ = synthetic_dataset

@@ -48,8 +48,9 @@ class PersonaModel(nn.Module):
         end = squares.gather(1, moves[..., 1, None].expand(-1, -1, squares.size(-1)))
         candidate = self.candidate(torch.cat([start, end, self.promotion_embedding(moves[..., 2]),
                                               adjusted[:, None, :].expand(-1, moves.size(1), -1)], dim=-1))
+        # Keep policy arithmetic in float32: -1e9 overflows float16 under AMP.
         # Finite padding avoids 0 * infinity in KL regularization.
-        base_logits = base_logits.masked_fill(~batch["legal_mask"], -1e9)
+        base_logits = base_logits.float().masked_fill(~batch["legal_mask"], -1e9)
         logits = (base_logits + self.policy(candidate).squeeze(-1)).masked_fill(~batch["legal_mask"], -1e9)
         return {"move_logits": logits, "base_logits": base_logits, "time_logits": self.time_head(candidate)}
 
