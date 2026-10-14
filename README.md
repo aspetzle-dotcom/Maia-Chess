@@ -3,7 +3,8 @@
 Learn a chess player's move preferences and time usage from recorded games.
 The initial profiles are **Hikaru Nakamura** (`hikaru`) and **Fabiano Caruana**
 (`fabianocaruana`). These are independent, experimental models inspired by their
-games; no affiliation or endorsement is implied.
+games; no affiliation or endorsement is implied. Train one checkpoint per player:
+each has its own adapter, move scorer, history/context layers, and timing head.
 
 The repository contains a runnable training pipeline, not trained grandmaster
 personas. Caruana is a provisional second profile: clock coverage and observed
@@ -16,9 +17,9 @@ pace must be audited before calling it a slower model.
 - Whole-game chronological train/validation/test splits, duplicate removal, and
   coverage reports by player and time class.
 - Frozen **Maia-3 5M** integration, with its source pinned to a commit.
-- A learned embedding and residual adapter for each player, a legal-move scorer,
+- A learned embedding and residual adapter in each model, a legal-move scorer,
   and a move-conditioned distribution over 32 duration bins.
-- Balanced player sampling, checkpoint selection, and evaluation against the
+- Player-filtered training, checkpoint selection, and evaluation against the
   frozen base policy. Timing evaluation includes the pre-move marginal prediction.
 - Offline prediction CLI, synthetic regression tests, GitHub Actions, and a Colab notebook.
 
@@ -37,9 +38,18 @@ Start with a modest download and inspect coverage before downloading entire care
 ```bash
 chess-personas download hikaru fabianocaruana --max-months 3
 chess-personas prepare "data/raw/*/*.json" --output data/processed
-chess-personas train --output runs/first --epochs 3 --batch-size 32
-chess-personas evaluate runs/first/best.pt --output runs/first/test-metrics.json
+chess-personas train --player hikaru --output runs/single-player/hikaru --epochs 10 --batch-size 32
+chess-personas train --player fabianocaruana --output runs/single-player/fabianocaruana --epochs 10 --batch-size 32
+chess-personas evaluate runs/single-player/hikaru/best.pt --output runs/single-player/hikaru/test-metrics.json
+chess-personas evaluate runs/single-player/fabianocaruana/best.pt --output runs/single-player/fabianocaruana/test-metrics.json
 ```
+
+`train` requires exactly one `--player` (`--players` remains a single-name alias).
+The prepared files can contain both players: each run filters training, validation,
+and test positions to its target. Each run starts from base Maia with fresh trainable
+layers and saves its own best checkpoint. The two models share no learned updates.
+The example uses ten epochs; the CLI default remains three. Existing joint
+checkpoints remain loadable for comparison.
 
 `download --max-months 0` requests all matching archive months. `--since 2024-01
 --until 2025-12` limits the date range. Completed months are cached; the current
@@ -58,14 +68,20 @@ training an empty persona. If GPU memory is tight, reduce `--batch-size` to 8.
 
 Open [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb). It supports a
 repository ZIP upload, including for a private repository. It walks through
-installation, a small data download, coverage inspection, training, and evaluation.
-Download `best.pt`, `config.json`, and `metrics.json` before the Colab session ends.
+installation, a small data download, coverage inspection, two independent training
+runs, and separate evaluation. Download the archive containing both player folders
+before the Colab session ends. Each folder contains its own `best.pt` and metrics.
 
 ### Predict a move and duration
 
 ```bash
-chess-personas predict runs/first/best.pt --record examples/position.json
+chess-personas predict runs/single-player/hikaru/best.pt --record examples/position.json
+chess-personas predict runs/single-player/fabianocaruana/best.pt --record examples/position.json
 ```
+
+For a single-player checkpoint, omit `player` from the observation to use the
+checkpoint's player automatically. An explicitly conflicting player is rejected.
+The example position is synthetic and can be used with either checkpoint.
 
 The output includes legal move probabilities, a conditional time estimate for each
 candidate, and a timing distribution averaged over all legal moves. Inputs must

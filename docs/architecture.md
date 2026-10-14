@@ -6,6 +6,12 @@ For player p and pre-move context x, learn:
 
 `P(move, duration | x, p) = P(move | x, p) P(duration | move, x, p)`.
 
+Each training run now fixes p to one player and produces an independent checkpoint.
+Hikaru and Caruana models start from the same pretrained Maia weights but have
+separate trainable history/context layers, one player embedding and adapter,
+move scorers, and timing heads. No trained weights or optimizer state are shared
+between these runs. Older joint checkpoints can still be evaluated and loaded.
+
 Inputs include board history, the last 16 plies with past durations, both clocks,
 base time, increment, ratings and player identity. Current-move labels, final
 results, engine evaluations and after-move clocks are never model inputs.
@@ -60,11 +66,16 @@ regularization. Defaults: timing weight 0.5, KL weight 0.02, AdamW learning rate
 0.0003, gradient clipping 1.0, three epochs. These are initial settings, not tuned
 results. CUDA uses mixed precision; CPU tests use float32.
 
-Balanced sampling gives each player equal expected training weight. A global
-chronological split keeps both sides of the same game together, including games
-between the target players. Equal timestamps stay in the same split. Validation
-selects the best checkpoint using a macro-average of player move NLL and weighted
-marginal timing NLL. Test data is evaluated separately and never used by training.
+The dataset filters to the run's single target player before sampling; positions
+from the other player do not train or validate that checkpoint. Sampling remains
+with replacement. A global chronological split keeps both sides of the same game
+together, including games between the target players. Equal timestamps stay in
+the same split. Validation
+selects each model's best checkpoint using its player's move NLL plus weighted
+marginal timing NLL. The shared trainer also retains macro-average selection for
+older programmatic joint experiments. Test data is evaluated separately and never
+used by training. The Colab workflow runs ten epochs per player; the library's
+three-epoch default remains available for quick checks.
 
 Metrics include move accuracy and NLL for both the adapted policy and frozen
 backbone. Timing metrics include conditional NLL (knowing the actual move),

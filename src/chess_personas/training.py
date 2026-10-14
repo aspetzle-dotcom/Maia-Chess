@@ -212,6 +212,10 @@ def predict(checkpoint, row, *, device="auto", top_k=5):
     model, device = load_model(checkpoint, device)
     # Labels are removed even if a prepared training record was supplied.
     row = {k: v for k, v in row.items() if k not in ("move", "elapsed_seconds")}
+    if "player" not in row and len(model.player_names) == 1:
+        row["player"] = model.player_names[0]
+    if row.get("player") not in model.player_names:
+        raise ValueError(f"Checkpoint supports {model.player_names}, not player {row.get('player')!r}")
     batch = to_device(collate_rows([row], model.player_names), device)
     result = model(batch)
     move_probs = result["move_logits"][0].softmax(-1)
