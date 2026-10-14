@@ -1,0 +1,19 @@
+{
+  "player": "hikaru",
+  "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2",
+  "board_history": [
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+    "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"
+  ],
+  "history": [
+    {"move": "e2e4", "white": true, "elapsed_seconds": null},
+    {"move": "e7e5", "white": false, "elapsed_seconds": null}
+  ],
+  "base_seconds": 180,
+  "increment_seconds": 2,
+  "self_clock": 180,
+  "opponent_clock": 180,
+  "self_rating": 3000,
+  "opponent_rating": 2900
+}

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chess-personas"
+version = "0.1.0"
+description = "Player-conditioned chess move and duration modeling"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["chess>=1.11.2,<2", "numpy>=1.26,<3"]
+
+[project.optional-dependencies]
+train = ["torch>=2.6,<3"]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+chess-personas = "chess_personas.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
