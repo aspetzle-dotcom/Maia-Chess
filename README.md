@@ -169,3 +169,7 @@ It is never substituted silently for Maia.
 
 Upstream Maia is installed separately and retains its AGPL-3.0 license. No upstream
 source, game archive, or model weights are bundled in this repository.
+
+## Pipeline presentation
+
+See the [detailed pipeline slide deck](docs/presentations/pipeline.pptx) and [speaker notes with source references](docs/presentations/pipeline-notes.md). The presentation covers the mathematical workflow, implementation, evaluation, and scientific limitations at the documented source snapshot.
