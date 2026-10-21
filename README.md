@@ -172,4 +172,4 @@ source, game archive, or model weights are bundled in this repository.
 
 ## Pipeline presentation
 
-See the [detailed pipeline slide deck](docs/presentations/pipeline.pptx) and [speaker notes with source references](docs/presentations/pipeline-notes.md). The presentation covers the mathematical workflow, implementation, evaluation, and scientific limitations at the documented source snapshot.
+See the [detailed pipeline slide deck](docs/presentations/pipeline.pptx), [PDF version](docs/presentations/pipeline.pdf) and [speaker notes with source references](docs/presentations/pipeline-notes.md). The presentation covers the mathematical workflow, implementation, evaluation, and scientific limitations at the documented source snapshot.
